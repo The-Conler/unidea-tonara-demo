@@ -301,6 +301,8 @@
      ========================================================= */
   var ALL = ["socio", "docente", "moderatore", "admin"], MA = ["moderatore", "admin"];
   var SECTIONS = [
+    { id: "panoramica", label: "Panoramica", g: "", r: ["socio", "docente"] },
+    { id: "cruscotto", label: "Panoramica", g: "", r: MA },
     { id: "profilo", label: "Profilo", g: "Area soci", r: ALL },
     { id: "tessera", label: "Tessera QR", g: "Area soci", r: ALL },
     { id: "corsi", label: "I miei corsi", g: "Area soci", r: ALL },
@@ -315,7 +317,6 @@
     { id: "doc-materiali", label: "Carica materiali", g: "Docente", r: ["docente"] },
     { id: "doc-avvisi", label: "Avvisi agli iscritti", g: "Docente", r: ["docente"] },
     { id: "doc-foto", label: "Proponi foto", g: "Docente", r: ["docente"] },
-    { id: "cruscotto", label: "Cruscotto", g: "Gestione", r: MA },
     { id: "g-corsi", label: "Corsi e calendario", g: "Gestione", r: MA },
     { id: "g-iscrizioni", label: "Iscrizioni", g: "Gestione", r: MA },
     { id: "g-attesa", label: "Liste d'attesa", g: "Gestione", r: MA },
@@ -334,7 +335,7 @@
     { id: "a-registro", label: "Registro azioni", g: "Amministrazione", r: ["admin"] }
   ];
   function allowed(id) { var s = SECTIONS.filter(function (x) { return x.id === id; })[0]; return s && s.r.indexOf(role()) >= 0 ? s : null; }
-  function defaultSection() { return { socio: "profilo", docente: "doc-corsi", moderatore: "cruscotto", admin: "cruscotto" }[role()]; }
+  function defaultSection() { return { socio: "panoramica", docente: "panoramica", moderatore: "cruscotto", admin: "cruscotto" }[role()]; }
   function loginPage() {
     return phead("Area soci", "Accedi all'Area soci", "Niente password: inserisci la tua email e ricevi un link di accesso.") +
       sec('<div class="cols-2 cols-2--top"><form class="form" data-form="magic"><label class="fld"><span>La tua email</span><input type="email" name="email" required placeholder="nome@esempio.it"></label><button class="btn btn--dark btn--big">Ricevi il link di accesso</button><p class="small muted">Il link vale 1 ora e si usa una volta sola.</p></form><div class="demo-login"><p class="label">Solo nella demo</p><h2>Entra con un profilo di prova.</h2><div class="demo-login__btns">' +
@@ -348,30 +349,115 @@
     if (id === "corsi") n = db.enr.filter(function (e) { return u && e.socioId === u.id && e.stato === "offerta"; }).length;
     return n ? ' <span class="cnt">' + n + "</span>" : "";
   }
+  var A = {};
+  var GROUP_CRUMB = { "": "Area soci", "Area soci": "Area soci", "Docente": "Area docente", "Gestione": "Gestione", "Amministrazione": "Amministrazione" };
+  var SUBS = {
+    panoramica: "Ecco cosa ti aspetta nei prossimi giorni.", cruscotto: "Tutto quello che c'è da fare oggi, in un colpo d'occhio.",
+    profilo: "I tuoi dati di contatto e la tua iscrizione.", tessera: "La tua tessera digitale: mostrala a inizio lezione.", corsi: "I corsi a cui sei iscritto e le liste d'attesa.",
+    attestati: "Gli attestati dei corsi conclusi.", materiali: "Le dispense dei tuoi corsi.", calendario: "Le tue prossime lezioni.", quota: "Quota associativa, pagamenti e donazioni.",
+    ricevute: "Le ricevute di quote e donazioni.", consensi: "Decidi tu cosa possiamo fare con i tuoi dati.",
+    "doc-corsi": "Gestisci i tuoi corsi, gli iscritti e le presenze.", "doc-presenze": "Segna chi è presente a lezione.", "doc-materiali": "Carica dispense e file per gli iscritti.",
+    "doc-avvisi": "Scrivi agli iscritti dei tuoi corsi.", "doc-foto": "Proponi le foto del corso: le pubblica il Moderatore.",
+    "g-corsi": "Crea e modifica corsi e lezioni.", "g-iscrizioni": "Iscritti per corso, iscrizioni manuali e annullamenti.", "g-attesa": "Offri i posti liberi a chi è in lista.",
+    "g-contenuti": "News, domande frequenti e avviso in evidenza.", "g-galleria": "Approva le foto dei docenti e gestisci l'archivio.", "g-messaggi": "Messaggi dal sito e proposte di corso.",
+    "g-newsletter": "Bozze e invii della newsletter.", "g-iscritti": "Elenco soci con i soli dati operativi.",
+    "a-soci": "Adesioni da approvare e schede complete dei soci.", "a-pagamenti": "Quote e pagamenti ricevuti da Stripe.", "a-donazioni": "Donazioni ed emissione delle ricevute.",
+    "a-trasparenza": "Documenti e contributi pubblici da pubblicare.", "a-utenti": "Chi ha quale ruolo sul sito.", "a-impostazioni": "Regole e dati dell'associazione.",
+    "a-export": "Scarica elenchi in CSV per Excel.", "a-registro": "Chi ha fatto cosa, e quando."
+  };
+  var LENS = '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  function searchBar(target, ph, filters) {
+    return '<div class="tools"><label class="search">' + LENS + '<input type="search" aria-label="Cerca" data-search="' + target + '" placeholder="' + esc(ph) + '"></label>' +
+      (filters ? '<button type="button" class="btn-filter" data-act="toggle-filters" aria-expanded="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M6 10h8M9 15h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Filtri</button>' : "") + "</div>" +
+      (filters ? '<div class="filterbox" hidden>' + filters.map(function (f) { return '<label class="fld fld--sm"><span>' + f.label + '</span><select data-rowfilter="' + f.key + '" data-target="' + target + '">' + f.opts.map(function (o) { return opt(o[0], o[1]); }).join("") + "</select></label>"; }).join("") + "</div>" : "");
+  }
+  function filterRows(target) {
+    var box = $(target); if (!box) return;
+    var inp = $('[data-search="' + target + '"]'), q = inp ? inp.value.toLowerCase() : "";
+    var fs = $$('[data-rowfilter][data-target="' + target + '"]');
+    var shown = 0;
+    $$("tbody tr", box).forEach(function (r) {
+      if (r.querySelector(".empty")) return;
+      var ok = r.textContent.toLowerCase().indexOf(q) >= 0;
+      fs.forEach(function (f) { if (f.value && r.getAttribute("data-" + f.getAttribute("data-rowfilter")) !== f.value) ok = false; });
+      r.style.display = ok ? "" : "none"; if (ok) shown++;
+    });
+    var c = $('[data-count-for="' + target + '"]'); if (c) c.textContent = shown + (shown === 1 ? " risultato" : " risultati");
+  }
+  function trA(cells, attrs) { return "<tr" + Object.keys(attrs || {}).map(function (k) { return " data-" + k + '="' + esc(attrs[k]) + '"'; }).join("") + ">" + cells.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>"; }
+  function minibar(p) { return p == null ? '<span class="meta">—</span>' : '<span class="minibar"><span class="minibar__t"><span style="width:' + p + '%"></span></span><b>' + p + "%</b></span>"; }
+  function splitLuogo(l) { return String(l).split(" – ").join(" · "); }
+  function courseHero(c, opts) {
+    var st = cStats(c), pct = Math.min(100, Math.round(100 * st.conf / Math.max(1, c.posti)));
+    return '<div class="pcard chero" data-course="' + c.id + '"><div class="chero__top"><span class="lbl">Corso selezionato</span>' + badge(c.stato.charAt(0).toUpperCase() + c.stato.slice(1), "soft") + '</div><h2 class="chero__t">' + esc(c.titolo) + '</h2><p class="chero__m">' + esc(c.giorno) + " · " + esc(c.ora) + " · " + esc(splitLuogo(c.luogo)) + '</p><div class="chero__p"><span class="pbar"><span style="width:' + pct + '%"></span></span><span class="chero__n"><b>' + st.conf + "/" + c.posti + "</b> iscritti</span></div>" + (opts && opts.action ? '<div class="chero__a">' + opts.action + "</div>" : "") + "</div>";
+  }
+  function pageHead(crumb, title, sub, side) {
+    return '<header class="ph"><div class="ph__l"><p class="crumb">' + crumb + "</p><h1>" + title + "</h1>" + (sub ? '<p class="ph__sub">' + sub + "</p>" : "") + "</div>" + (side ? '<div class="ph__r">' + side + "</div>" : "") + "</header>";
+  }
   function renderArea(parts) {
     if (role() === "visitatore") return loginPage();
     var sid = parts[0] || defaultSection(), s = allowed(sid), u = me();
-    var groups = [], nav = "", selOpts = "";
+    var groups = [], nav = "";
     SECTIONS.forEach(function (x) { if (x.r.indexOf(role()) >= 0 && groups.indexOf(x.g) < 0) groups.push(x.g); });
     groups.forEach(function (g) {
       var gl = g === "Gestione" && role() === "admin" ? "Gestione contenuti" : g;
-      nav += '<p class="pside__g">' + esc(gl) + "</p><ul>";
-      selOpts += '<optgroup label="' + esc(gl) + '">';
-      SECTIONS.forEach(function (x) { if (x.g !== g || x.r.indexOf(role()) < 0) return; nav += '<li><a href="#/area/' + x.id + '"' + (x.id === sid ? ' aria-current="page"' : "") + ">" + esc(x.label) + countBadge(x.id) + "</a></li>"; selOpts += opt(x.id, x.label, sid); });
-      nav += "</ul>"; selOpts += "</optgroup>";
+      nav += (g ? '<p class="side__g">' + esc(gl) + "</p>" : "") + "<ul>";
+      SECTIONS.forEach(function (x) { if (x.g !== g || x.r.indexOf(role()) < 0) return; nav += '<li><a href="#/area/' + x.id + '"' + (x.id === sid ? ' aria-current="page"' : "") + ">" + esc(x.label) + countBadge(x.id) + "</a></li>"; });
+      nav += "</ul>";
     });
-    var content;
-    if (!s) content = '<div class="denied"><h2>Non hai accesso a questa sezione</h2><p class="muted">Il ruolo ' + esc(ROLES[role()]) + " non la vede: ogni ruolo vede solo quello che gli serve.</p></div>";
-    else { try { content = A[sid](parts.slice(1)); } catch (err) { console.error(err); content = "<p>Errore nella sezione.</p>"; } }
-    return '<section class="phead phead--sm"><div class="wrap"><p class="eyebrow">Area soci · ' + esc(ROLES[role()]) + "</p><h1>Ciao, " + esc(u.nome) + '</h1><p class="lead">' + badge(ROLES[role()], "light") + " Tessera " + esc(u.tessera || "—") + "</p></div></section>" + urgent() +
-      '<div class="wrap panel"><aside class="pside"><label class="pselect fld"><span>Vai a</span><select data-goto>' + selOpts + '</select></label><nav aria-label="Menu area riservata">' + nav + '</nav><button class="btn btn--line" data-act="logout">Esci</button></aside><div class="pmain" id="pmain">' + (s ? '<h2 class="ptitle">' + esc(s.label) + "</h2>" : "") + content + "</div></div>";
+    var content, head = "";
+    if (!s) content = pageHead("Area soci", "Accesso negato", "") + '<div class="denied"><h2>Non hai accesso a questa sezione</h2><p class="muted">Il ruolo ' + esc(ROLES[role()]) + " non la vede: ogni ruolo vede solo quello che gli serve.</p></div>";
+    else {
+      var crumb = esc(s.g ? (GROUP_CRUMB[s.g] || s.g) : { socio: "Area soci", docente: "Area docente", moderatore: "Gestione", admin: "Amministrazione" }[role()]) + " / " + esc(s.label);
+      var custom = { panoramica: 1, cruscotto: 1, "doc-corsi": 1 };
+      if (!custom[sid]) head = pageHead(crumb, esc(s.label), SUBS[sid] || "");
+      try { content = head + A[sid](parts.slice(1), crumb); } catch (err) { console.error(err); content = head + "<p>Errore nella sezione.</p>"; }
+    }
+    var ini = esc(u.nome.charAt(0) + u.cognome.charAt(0));
+    return '<div class="app"><div class="apptop"><a class="side__logo" href="#/area">UNIdea.</a><button type="button" class="apptop__btn" data-act="side-toggle" aria-controls="side" aria-expanded="false">Menu</button></div>' +
+      '<div class="side-scrim" data-act="side-close"></div><aside class="side" id="side"><a class="side__logo" href="#/area">UNIdea.</a><nav aria-label="Menu area riservata">' + nav + '</nav><div class="side__foot"><div class="side__user"><span class="side__av">' + ini + "</span><span><b>" + esc(fullName(u)) + "</b><small>" + esc(ROLES[role()]) + '</small></span></div><a class="side__link" href="#/">← Torna al sito</a><button class="side__out" data-act="logout">Esci</button></div></aside>' +
+      '<div class="appmain" id="pmain">' + content + "</div></div>";
   }
+  /* ----- PANORAMICA ----- */
+  function nextLessonFor(courses) {
+    var best = null;
+    courses.forEach(function (c) { if (c.stato !== "pubblicato") return; lessons(c).forEach(function (l) { if (l.date >= today() && !l.annullata && (!best || l.date < best.l.date)) best = { c: c, l: l }; }); });
+    return best;
+  }
+  function lessonCard(title, x, actions) {
+    if (!x) return card(title, '<p class="empty">Nessuna lezione in programma.</p>', "ov");
+    var parts = String(x.c.luogo).split(" – ");
+    return card(title, '<p class="ov__big">' + esc(x.c.titolo) + '</p><dl class="ov__dl"><dt>Giorno</dt><dd>' + fmtDay(x.l.date) + "</dd><dt>Ora</dt><dd>" + esc(x.c.ora) + "</dd><dt>Aula</dt><dd>" + esc(parts[0]) + "</dd><dt>Sede</dt><dd>" + esc(parts[1] || "—") + '</dd></dl><div class="btns">' + actions + "</div>", "ov");
+  }
+  A.panoramica = function (p, crumb) {
+    var u = me(), ok = quotaOk(u), doc = role() === "docente";
+    var myE = db.enr.filter(function (e) { return e.socioId === u.id && ["confermato", "attesa", "offerta"].indexOf(e.stato) >= 0; });
+    var conf = myE.filter(function (e) { return e.stato === "confermato"; }).map(function (e) { return course(e.corsoId); }).filter(function (c) { return c && c.stato === "pubblicato"; });
+    var offers = myE.filter(function (e) { return e.stato === "offerta"; });
+    var html = pageHead(crumb, "Ciao, " + esc(u.nome), doc ? "I tuoi corsi da docente e la tua area socio, in un colpo d'occhio." : SUBS.panoramica);
+    html += offers.map(function (e) { var c = course(e.corsoId); return '<div class="pcard ov-offer" data-course="' + c.id + '"><div><span class="lbl">Dalla lista d\'attesa</span><h3>Si è liberato un posto in «' + esc(c.titolo) + '»</h3><p class="meta">Rispondi entro il ' + fmtTs(e.scade) + '.</p></div><div class="btns"><button class="btn btn--dark" data-act="offer-accept" data-id="' + e.id + '">Accetta' + (Number(c.costo) ? " · " + euro(c.costo) : "") + '</button><button class="btn btn--line" data-act="offer-decline" data-id="' + e.id + '">Rifiuta</button></div></div>'; }).join("");
+    var g = '<div class="ov-grid">';
+    if (doc) {
+      var teach = myTeach();
+      g += lessonCard("Prossima lezione da tenere", nextLessonFor(teach), '<a class="btn btn--dark" href="#/area/doc-presenze/' + ((nextLessonFor(teach) || {}).c || teach[0] || {}).id + '">Registro presenze</a><a class="btn btn--line" href="#/area/doc-avvisi">Scrivi agli iscritti</a>');
+      g += card("I tuoi corsi", '<ul class="ov-list">' + teach.filter(function (c) { return c.stato === "pubblicato"; }).map(function (c) { var st = cStats(c); return '<li><a href="#/area/doc-corsi/' + c.id + '"><b>' + esc(c.titolo) + '</b><span class="meta">' + esc(c.giorno) + " " + esc(c.ora) + '</span></a><span class="minibar"><span class="minibar__t"><span style="width:' + Math.round(100 * st.conf / c.posti) + '%"></span></span><b>' + st.conf + "/" + c.posti + "</b></span></li>"; }).join("") + "</ul>", "ov");
+    }
+    g += card("Tessera socio", '<div class="ov-card"><div class="ov-card__qr">' + qrSvg("UNIDEA-TONARA|" + u.tessera + "|" + u.nome + " " + u.cognome + "|SCAD " + u.quotaScadenza) + '</div><div><p class="ov__big">N. ' + esc(u.tessera) + '</p><p class="meta">' + (ok ? "Attiva fino al " + fmt(u.quotaScadenza) : "Scaduta il " + fmt(u.quotaScadenza)) + '</p><a class="btn btn--dark btn--sm" href="#/area/tessera">Apri tessera</a></div></div>', "ov ov-tess");
+    if (!doc) g += lessonCard("Prossima lezione", nextLessonFor(conf), '<button class="btn btn--line" data-act="ics">Aggiungi al calendario</button>');
+    if (!doc || conf.length) g += card("I miei corsi", conf.length ? '<ul class="ov-list">' + conf.map(function (c) { var pc = presPct(c.id, u.id); return '<li><a href="#/corso/' + c.id + '"><b>' + esc(c.titolo) + '</b><span class="meta">' + esc(c.giorno) + " " + esc(c.ora) + "</span></a>" + minibar(pc) + "</li>"; }).join("") + "</ul>" + myE.filter(function (e) { return e.stato === "attesa"; }).map(function (e) { return '<p class="meta">In lista d\'attesa per «' + esc(course(e.corsoId).titolo) + "» · posizione " + waitPos(e) + "</p>"; }).join("") : '<p class="empty">Nessun corso.</p><a class="btn btn--line btn--sm" href="#/corsi">Cerca un corso</a>', "ov");
+    g += card("Quota associativa", '<p class="ov__big">' + (ok ? "Attiva" : "Scaduta") + '</p><p class="meta">' + (ok ? "Valida fino al " + fmt(u.quotaScadenza) + ". Il rinnovo si apre a settembre." : "Scaduta il " + fmt(u.quotaScadenza) + ".") + "</p>" + (ok ? '<a class="btn btn--line btn--sm" href="#/area/quota">Pagamenti e donazioni</a>' : '<button class="btn btn--dark" data-act="renew">Rinnova · ' + euro(db.settings.quota) + "</button>"), "ov");
+    var av = [];
+    if (db.urgent.attivo && db.urgent.testo) av.push({ t: db.urgent.testo, da: "Segreteria", d: today() });
+    db.avvisi.filter(function (a) { return conf.some(function (c) { return c.id === a.corsoId; }) || (doc && myTeach().some(function (c) { return c.id === a.corsoId; })); }).slice(0, 4).forEach(function (a) { av.push({ t: a.testo, da: a.da + " · " + course(a.corsoId).titolo, d: a.data }); });
+    g += card("Avvisi", av.length ? '<ul class="ov-av">' + av.map(function (a) { return '<li><span class="ov-av__dot"></span><div><p>' + esc(a.t) + '</p><span class="meta">' + esc(a.da) + " · " + fmt(a.d) + "</span></div></li>"; }).join("") + "</ul>" : '<p class="empty">Nessun avviso.</p>', "ov");
+    g += card("Scorciatoie", '<div class="ov-sc">' + (doc ? [["doc-corsi", "Corsi e iscritti"], ["doc-materiali", "Materiali"], ["doc-foto", "Proponi foto"]] : [["attestati", "Attestati"], ["materiali", "Materiali"], ["ricevute", "Ricevute"]]).map(function (x) { return '<a href="#/area/' + x[0] + '">' + x[1] + "<span>→</span></a>"; }).join("") + "</div>", "ov");
+    return html + g + "</div>";
+  };
   function tbl(head, rows, cls, id) { return '<div class="tbl ' + (cls || "") + '"' + (id ? ' id="' + id + '"' : "") + "><table><thead><tr>" + head.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr></thead><tbody>" + (rows.length ? rows.join("") : '<tr><td colspan="' + head.length + '" class="empty">Nessun elemento.</td></tr>') + "</tbody></table></div>"; }
   function tr(cells) { return "<tr>" + cells.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>"; }
   function card(title, inner, cls) { return '<div class="pcard ' + (cls || "") + '">' + (title ? "<h3>" + title + "</h3>" : "") + inner + "</div>"; }
   function note(t) { return '<p class="pnote">' + t + "</p>"; }
 
-  var A = {};
   /* ----- SOCIO ----- */
   A.profilo = function () {
     var u = me();
@@ -441,13 +527,21 @@
   /* ----- DOCENTE ----- */
   function myTeach() { var u = me(); return db.courses.filter(function (c) { return c.docenteId === u.id && ["archiviato", "eliminato"].indexOf(c.stato) < 0; }); }
   function courseSelect(list, sel, path) { return '<label class="fld"><span>Corso</span><select data-goto>' + list.map(function (c) { return opt(path + c.id, c.titolo + (c.stato !== "pubblicato" ? " (" + c.stato + ")" : ""), path + sel); }).join("") + "</select></label>"; }
-  A["doc-corsi"] = function () {
+  A["doc-corsi"] = function (p, crumb) {
     var cs = myTeach();
-    return note("Vedi solo i tuoi corsi. Per cambiare date, iscrizioni o lista d'attesa scrivi al Moderatore.") + (cs.map(function (c, k) {
-      var st = cStats(c);
-      var iscr = cEnr(c.id, "confermato").map(function (e) { var s = user(e.socioId); var p = presPct(c.id, s.id); return tr([esc(fullName(s)), esc(s.email), esc(s.tel), s.consImg ? "Sì" : badge("No", "warn"), p == null ? "—" : p + "%"]); });
-      return '<div class="pcard"><div class="row-between"><div><h3>' + esc(c.titolo) + '</h3><p class="meta">' + esc(c.giorno) + " " + esc(c.ora) + " · " + esc(c.luogo) + " · " + st.conf + "/" + c.posti + " iscritti</p></div>" + badge(c.stato, c.stato === "pubblicato" ? "ok" : "grey") + "</div><details" + (k === 0 ? " open" : "") + "><summary>Iscritti (" + st.conf + ")</summary>" + tbl(["Nome", "Email", "Telefono", "Consenso foto", "Presenze"], iscr) + "</details><details><summary>Lista d'attesa (" + st.att.length + ")</summary>" + (st.att.length ? "<ol>" + st.att.map(function (e) { return "<li>" + esc(fullName(user(e.socioId))) + "</li>"; }).join("") + "</ol>" : '<p class="empty">Nessuno in lista.</p>') + '<p class="meta">Solo visualizzazione.</p></details></div>';
-    }).join("") || '<p class="empty">Nessun corso assegnato.</p>');
+    if (!cs.length) return pageHead(crumb, "Corsi e iscritti", SUBS["doc-corsi"]) + '<p class="empty">Nessun corso assegnato.</p>';
+    var c = cs.filter(function (x) { return x.id === p[0]; })[0] || cs.filter(function (x) { return x.stato === "pubblicato"; })[0] || cs[0];
+    var tab = p[1] === "attesa" ? "attesa" : "iscritti", st = cStats(c), soglia = Number(db.settings.soglia) || 70;
+    var sel = cs.length > 1 ? '<label class="fld fld--sm"><span>Corso</span><select data-goto aria-label="Scegli il corso">' + cs.map(function (x) { return opt("#/area/doc-corsi/" + x.id, x.titolo + (x.stato !== "pubblicato" ? " (" + x.stato + ")" : ""), "#/area/doc-corsi/" + c.id); }).join("") + "</select></label>" : "";
+    var html = pageHead(crumb, "Corsi e iscritti", SUBS["doc-corsi"], sel) + courseHero(c, { action: '<a class="btn btn--dark btn--pill" href="#/area/doc-presenze/' + c.id + '">Registro presenze</a>' });
+    html += '<div class="ptabs" role="tablist"><a role="tab" href="#/area/doc-corsi/' + c.id + '"' + (tab === "iscritti" ? ' aria-selected="true" class="is-on"' : "") + ">Iscritti (" + st.conf + ')</a><a role="tab" href="#/area/doc-corsi/' + c.id + '/attesa"' + (tab === "attesa" ? ' aria-selected="true" class="is-on"' : "") + ">Lista d'attesa" + (st.att.length ? " (" + st.att.length + ")" : "") + "</a></div>";
+    if (tab === "iscritti") {
+      var rows = cEnr(c.id, "confermato").map(function (e) { var s = user(e.socioId), pc = presPct(c.id, s.id); return trA([esc(fullName(s)), esc(s.email), esc(s.tel), minibar(pc)], { pres: pc == null ? "nd" : pc < soglia ? "sotto" : "sopra" }); });
+      html += searchBar("#doc-iscr", "Cerca per nome, email o telefono", [{ key: "pres", label: "Presenze", opts: [["", "Tutte"], ["sotto", "Sotto il " + soglia + "% (attestato a rischio)"], ["sopra", "Dal " + soglia + "% in su"]] }]) + '<p class="meta tools__n" data-count-for="#doc-iscr">' + rows.length + (rows.length === 1 ? " risultato" : " risultati") + "</p>" + tbl(["Nome", "Email", "Telefono", "Presenze"], rows, "tbl--ref", "doc-iscr");
+    } else {
+      html += searchBar("#doc-att", "Cerca in lista d'attesa") + tbl(["#", "Nome", "In lista dal", "Stato"], st.att.map(function (e, i) { var s = user(e.socioId); return tr([i + 1, esc(fullName(s)), fmt(String(e.data).slice(0, 10)), badge("In attesa", "soft")]); }).concat(cEnr(c.id, "offerta").map(function (e) { return tr(["—", esc(fullName(user(e.socioId))), "—", badge("Posto offerto", "soft")]); })), "tbl--ref", "doc-att") + note("Solo visualizzazione: i posti li offre il Moderatore.");
+    }
+    return html;
   };
   A["doc-presenze"] = function (p) {
     var cs = myTeach().filter(function (c) { return c.stato === "pubblicato" || c.stato === "concluso"; });
@@ -484,7 +578,7 @@
   };
 
   /* ----- MODERATORE / ADMIN ----- */
-  A.cruscotto = function () {
+  A.cruscotto = function (p, crumb) {
     var adm = role() === "admin";
     var next = []; publicCourses().forEach(function (c) { lessons(c).forEach(function (l) { if (l.date >= today() && !l.annullata) next.push({ c: c, l: l }); }); });
     next.sort(function (a, b) { return a.l.date < b.l.date ? -1 : 1; });
@@ -498,7 +592,7 @@
       var d30 = addDaysIso(today(), -30);
       tiles = [["Soci attivi", db.users.filter(function (u) { return u.stato === "attivo"; }).length, "a-soci"], ["Adesioni da approvare", db.users.filter(function (u) { return u.stato === "in attesa"; }).length, "a-soci"], ["Incassi ultimi 30 giorni", euro(db.payments.filter(function (p) { return p.data >= d30 && p.stato === "Pagato"; }).reduce(function (s, p) { return s + Number(p.importo); }, 0)), "a-pagamenti"], ["Donazioni senza ricevuta", db.donations.filter(function (d) { return !d.ricevuta; }).length, "a-donazioni"]].concat(tiles);
     }
-    return '<div class="tiles">' + tiles.map(function (t) { return '<a class="tile" href="#/area/' + t[2] + '"><b>' + t[1] + "</b><span>" + t[0] + "</span></a>"; }).join("") + "</div>" + card("Prossime lezioni", tbl(["Data", "Ora", "Corso", "Iscritti"], next.slice(0, 6).map(function (x) { return tr([fmtDay(x.l.date), esc(x.c.ora), esc(x.c.titolo), cStats(x.c).conf + "/" + x.c.posti]); }))) + card("Iscrizioni per corso", tbl(["Corso", "Iscritti", "Lista d'attesa"], publicCourses().map(function (c) { var s = cStats(c); return tr([esc(c.titolo), s.conf + "/" + c.posti, s.att.length]); })));
+    return pageHead(crumb, "Ciao, " + esc(me().nome), adm ? "Il punto della situazione per l'Admin: soci, incassi e attività da seguire." : SUBS.cruscotto) + '<div class="tiles">' + tiles.map(function (t) { return '<a class="tile" href="#/area/' + t[2] + '"><b>' + t[1] + "</b><span>" + t[0] + "</span></a>"; }).join("") + "</div>" + card("Prossime lezioni", tbl(["Data", "Ora", "Corso", "Iscritti"], next.slice(0, 6).map(function (x) { return tr([fmtDay(x.l.date), esc(x.c.ora), esc(x.c.titolo), cStats(x.c).conf + "/" + x.c.posti]); }))) + card("Iscrizioni per corso", tbl(["Corso", "Iscritti", "Lista d'attesa"], publicCourses().map(function (c) { var s = cStats(c); return tr([esc(c.titolo), s.conf + "/" + c.posti, s.att.length]); })));
   };
   A["g-corsi"] = function (p) {
     if (p[0]) return courseForm(p[0] === "nuovo" ? null : course(p[0]));
@@ -521,12 +615,12 @@
       var s = user(e.socioId), act;
       if (!Number(c.costo)) act = '<button class="btn btn--line btn--sm" data-act="unenroll" data-id="' + e.id + '">Annulla iscrizione</button>';
       else act = adm ? '<button class="btn btn--line btn--sm" data-act="refund-enroll" data-id="' + e.id + '">Annulla e rimborsa</button>' : '<span class="meta">A pagamento: chiedi all\'Admin</span>';
-      return tr([esc(fullName(s)), esc(s.email), esc(s.tel), quotaOk(s) ? badge("attiva", "ok") : badge("scaduta", "warn"), s.consImg ? "Sì" : badge("No", "warn"), act]);
+      return trA([esc(fullName(s)), esc(s.email), esc(s.tel), minibar(presPct(c.id, s.id)), quotaOk(s) ? badge("attiva", "ok") : badge("scaduta", "warn"), act], { quota: quotaOk(s) ? "ok" : "no" });
     });
     var avail = db.users.filter(function (u) { return u.stato === "attivo" && !db.enr.some(function (e) { return e.corsoId === c.id && e.socioId === u.id && ["confermato", "attesa", "offerta"].indexOf(e.stato) >= 0; }); });
-    return courseSelect(cs, c.id, "#/area/g-iscrizioni/") + '<p class="meta">' + st.conf + "/" + c.posti + " iscritti · " + st.liberi + " posti liberi · " + st.att.length + " in lista d'attesa</p>" +
+    return '<div class="ph-sel">' + courseSelect(cs, c.id, "#/area/g-iscrizioni/") + "</div>" + courseHero(c, { action: '<a class="btn btn--line btn--pill" href="#/area/g-attesa">Lista d\'attesa (' + st.att.length + ")</a>" }) +
       (Number(c.costo) && !adm ? note("Questo corso è a pagamento: iscrizioni manuali e rimborsi li gestisce l'Admin.") : card("Iscrivi a mano un socio", '<form class="form form--inline" data-form="iscrivi" data-c="' + c.id + '"><label class="fld"><span>Socio</span><select name="socioId">' + avail.map(function (u) { return opt(u.id, fullName(u) + " · " + u.tessera); }).join("") + '</select></label><button class="btn btn--dark"' + (st.liberi > 0 ? "" : " disabled") + ">Iscrivi</button></form>" + (st.liberi > 0 ? "" : '<p class="meta">Corso pieno: usa la lista d\'attesa.</p>'))) +
-      tbl(["Nome", "Email", "Telefono", "Quota", "Consenso foto", ""], rows, "iscr-tbl");
+      searchBar("#iscr-tbl", "Cerca per nome, email o telefono", [{ key: "quota", label: "Quota", opts: [["", "Tutte"], ["ok", "Attiva"], ["no", "Scaduta"]] }]) + tbl(["Nome", "Email", "Telefono", "Presenze", "Quota", ""], rows, "tbl--ref", "iscr-tbl");
   };
   A["g-attesa"] = function () {
     var out = publicCourses().map(function (c) {
@@ -578,8 +672,8 @@
   };
   A["g-iscritti"] = function () {
     var us = db.users.filter(function (u) { return ["in attesa", "cessato"].indexOf(u.stato) < 0; });
-    return note("Dati operativi: senza codice fiscale, data di nascita, indirizzo e importi.") + '<label class="fld"><span>Cerca</span><input data-search="#iscritti-tbl" placeholder="Nome o email"></label>' +
-      tbl(["Nome", "Email", "Telefono", "Livello", "Quota", "Consenso foto"], us.map(function (u) { return tr([esc(fullName(u)), esc(u.email), esc(u.tel), esc(u.livello), quotaOk(u) ? badge("attiva", "ok") : badge("scaduta", "warn"), u.consImg ? "Sì" : badge("No", "warn")]); }), "", "iscritti-tbl");
+    return note("Dati operativi: senza codice fiscale, data di nascita, indirizzo e importi.") + searchBar("#iscritti-tbl", "Cerca per nome o email", [{ key: "quota", label: "Quota", opts: [["", "Tutte"], ["ok", "Attiva"], ["no", "Scaduta"]] }, { key: "liv", label: "Livello", opts: [["", "Tutti"], ["Base", "Base"], ["Attivo", "Attivo"], ["Sostenitore", "Sostenitore"]] }]) +
+      tbl(["Nome", "Email", "Telefono", "Livello", "Quota"], us.map(function (u) { return trA([esc(fullName(u)), esc(u.email), esc(u.tel), esc(u.livello), quotaOk(u) ? badge("attiva", "ok") : badge("scaduta", "warn")], { quota: quotaOk(u) ? "ok" : "no", liv: u.livello }); }), "tbl--ref", "iscritti-tbl");
   };
   /* ----- ADMIN ----- */
   A["a-soci"] = function (p) {
@@ -587,8 +681,8 @@
     var pend = db.users.filter(function (u) { return u.stato === "in attesa"; });
     var all = db.users.filter(function (u) { return u.stato !== "in attesa"; });
     return card("Adesioni da approvare (" + pend.length + ")", pend.length ? tbl(["Nome", "Email", "Codice fiscale", "Richiesta", ""], pend.map(function (u) { return tr([esc(fullName(u)), esc(u.email), esc(u.cf), fmt(u.adesione), '<button class="btn btn--dark btn--sm" data-act="approve" data-id="' + u.id + '">Approva</button> <button class="btn btn--line btn--sm" data-act="reject" data-id="' + u.id + '">Rifiuta</button>']); }), "pending-tbl") + note("Approvando si attiva il socio, si genera la tessera QR e parte l'email di benvenuto.") : '<p class="empty">Nessuna adesione in attesa.</p>') +
-      '<label class="fld"><span>Cerca socio</span><input data-search="#soci-tbl" placeholder="Nome, email, CF, tessera"></label>' +
-      tbl(["Tessera", "Nome", "Codice fiscale", "Nascita", "Contatti", "Stato", ""], all.map(function (u) { return tr([esc(u.tessera), esc(fullName(u)) + (u.ruolo !== "socio" ? "<br>" + badge(ROLES[u.ruolo], "grey") : ""), esc(u.cf), fmt(u.nascita), esc(u.email) + "<br>" + esc(u.tel), badge(u.stato, u.stato === "attivo" ? "ok" : "warn"), '<a class="btn btn--line btn--sm" href="#/area/a-soci/' + u.id + '">Scheda</a>']); }), "", "soci-tbl");
+      '<h2 class="psub">Tutti i soci</h2>' + searchBar("#soci-tbl", "Nome, email, codice fiscale, tessera", [{ key: "stato", label: "Stato", opts: [["", "Tutti"], ["attivo", "Attivo"], ["sospeso", "Sospeso"], ["cessato", "Cessato"]] }]) +
+      tbl(["Tessera", "Nome", "Codice fiscale", "Nascita", "Contatti", "Stato", ""], all.map(function (u) { return trA([esc(u.tessera), esc(fullName(u)) + (u.ruolo !== "socio" ? "<br>" + badge(ROLES[u.ruolo], "grey") : ""), esc(u.cf), fmt(u.nascita), esc(u.email) + "<br>" + esc(u.tel), badge(u.stato, u.stato === "attivo" ? "ok" : "warn"), '<a class="btn btn--line btn--sm" href="#/area/a-soci/' + u.id + '">Scheda</a>'], { stato: u.stato }); }), "tbl--ref", "soci-tbl");
   };
   function socioForm(u) {
     if (!u) return '<p class="empty">Socio non trovato.</p>';
@@ -614,8 +708,8 @@
   A["a-utenti"] = function () {
     var o = { admin: 0, moderatore: 1, docente: 2, socio: 3 };
     var us = db.users.filter(function (u) { return ["in attesa", "cessato"].indexOf(u.stato) < 0; }).sort(function (a, b) { return o[a.ruolo] - o[b.ruolo]; });
-    return note("Ogni persona ha un solo ruolo. Il cambio richiede la doppia conferma. Non si può togliere il ruolo all'ultimo Admin.") + '<label class="fld"><span>Cerca</span><input data-search="#utenti-tbl" placeholder="Nome o email"></label>' +
-      tbl(["Nome", "Email", "Ruolo attuale", "Nuovo ruolo"], us.map(function (u) { return tr([esc(fullName(u)), esc(u.email), badge(ROLES[u.ruolo], u.ruolo === "socio" ? "grey" : "ok"), '<div class="form--inline"><select aria-label="Nuovo ruolo per ' + esc(fullName(u)) + '" data-role-for="' + u.id + '">' + ["socio", "docente", "moderatore", "admin"].map(function (r) { return opt(r, ROLES[r], u.ruolo); }).join("") + '</select><button class="btn btn--dark btn--sm" data-act="change-role" data-id="' + u.id + '">Cambia</button></div>']); }), "", "utenti-tbl");
+    return note("Ogni persona ha un solo ruolo. Il cambio richiede la doppia conferma. Non si può togliere il ruolo all'ultimo Admin.") + searchBar("#utenti-tbl", "Cerca per nome o email", [{ key: "ruolo", label: "Ruolo", opts: [["", "Tutti"], ["admin", "Admin"], ["moderatore", "Moderatore"], ["docente", "Docente"], ["socio", "Socio"]] }]) +
+      tbl(["Nome", "Email", "Ruolo attuale", "Nuovo ruolo"], us.map(function (u) { return trA([esc(fullName(u)), esc(u.email), badge(ROLES[u.ruolo], u.ruolo === "socio" ? "grey" : "ok"), '<div class="form--inline"><select aria-label="Nuovo ruolo per ' + esc(fullName(u)) + '" data-role-for="' + u.id + '">' + ["socio", "docente", "moderatore", "admin"].map(function (r) { return opt(r, ROLES[r], u.ruolo); }).join("") + '</select><button class="btn btn--dark btn--sm" data-act="change-role" data-id="' + u.id + '">Cambia</button></div>'], { ruolo: u.ruolo }); }), "tbl--ref", "utenti-tbl");
   };
   A["a-impostazioni"] = function () {
     var s = db.settings;
@@ -649,6 +743,8 @@
     else html = P.notfound();
     $("#app").innerHTML = html;
     document.body.setAttribute("data-page", page);
+    document.body.classList.toggle("is-app", page === "area" && role() !== "visitatore");
+    document.body.classList.remove("side-open");
     if (page === "corsi") applyFilters();
     if (location.hash !== lastPath) { window.scrollTo(0, 0); lastPath = location.hash; }
     updateChrome();
@@ -697,6 +793,9 @@
   var ACT = {};
   ACT["reset-demo"] = function () { modal("Reset demo", "<p>Tutti i dati di prova tornano come all'inizio e torni Visitatore. Vuoi continuare?</p>", [{ label: "Annulla" }, { label: "Sì, reset", primary: true, onClick: function () { localStorage.removeItem(KEY); localStorage.removeItem(SKEY); db = window.UNIDEA_SEED(); session = { role: "visitatore", userId: null }; save(); go("#/"); toast("Demo ripristinata."); } }]); };
   ACT["login-as"] = function (el) { var r = el.getAttribute("data-role"); if (setRole(r)) { log("Accesso all'area riservata (demo)"); save(); go("#/area"); toast("Sei entrato come " + ROLES[r] + "."); } };
+  ACT["side-toggle"] = function (el) { var o = document.body.classList.toggle("side-open"); el.setAttribute("aria-expanded", o ? "true" : "false"); };
+  ACT["side-close"] = function () { document.body.classList.remove("side-open"); };
+  ACT["toggle-filters"] = function (el) { var box = el.parentNode.nextElementSibling; if (!box || !box.classList.contains("filterbox")) return; box.hidden = !box.hidden; el.setAttribute("aria-expanded", box.hidden ? "false" : "true"); el.classList.toggle("is-on", !box.hidden); };
   ACT.logout = function () { setRole("visitatore"); go("#/"); toast("Sei uscito."); };
   ACT["lang-it"] = function () { toast("Sei già sulla versione italiana."); };
   ACT["lang-en"] = function () { toast("La versione inglese è prevista nel sito: in demo solo italiano."); };
@@ -926,6 +1025,7 @@
     if (t.matches("[data-goto]")) { var v = t.value; go(v.charAt(0) === "#" ? v : "#/area/" + v); }
     else if (t.matches('[data-act-change="proposta-state"]')) { var p = byId(db.proposte, t.getAttribute("data-id")); p.stato = t.value; log("Proposta \"" + p.titolo + "\": " + p.stato); save(); toast("Stato aggiornato."); }
     else if (t.matches("[data-filter]")) applyFilters();
+    else if (t.matches("[data-rowfilter]")) filterRows(t.getAttribute("data-target"));
     else if (t.matches("[data-logfilter]")) updateLog();
     else if (t.matches(".presgrid input")) { var pc = $("#pres-count"); if (pc) pc.textContent = $$(".presgrid input:checked").length + " presenti"; }
   });
@@ -933,7 +1033,7 @@
     var t = ev.target;
     if (t.matches("[data-filter]")) applyFilters();
     else if (t.matches("[data-logfilter]")) updateLog();
-    else if (t.matches("[data-search]")) { var q = t.value.toLowerCase(); $$(t.getAttribute("data-search") + " tbody tr").forEach(function (r) { r.style.display = r.textContent.toLowerCase().indexOf(q) >= 0 ? "" : "none"; }); }
+    else if (t.matches("[data-search]")) filterRows(t.getAttribute("data-search"));
   });
   window.addEventListener("hashchange", render);
   window.addEventListener("storage", function (e) { if (e.key === KEY || e.key === SKEY) { load(); rerender(); } });
