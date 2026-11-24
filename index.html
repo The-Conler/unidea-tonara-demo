@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEMO · UNIdea Tonara APS – Università Intergenerazionale</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<!-- DEMO CONLER STUDIO: sito statico di prova, dati finti salvati solo in questo browser (localStorage). Foto illustrative generate, nessuna persona reale. Nessun servizio esterno. -->
+<header class="navigation-01-header">
+  <div class="header-shell">
+    <div class="header-bar" aria-hidden="true"></div>
+    <div class="header-content">
+      <a class="logo logo--wordmark" href="#/" aria-label="UNIdea Tonara – Home">UNIdea<span>Tonara</span></a>
+
+      <nav class="navigation-01" aria-label="Menu principale">
+        <ul class="nav-list">
+          <li>
+            <button type="button" class="nav-item" data-flyout="associazione" aria-expanded="false" aria-haspopup="true">
+              Associazione
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <div class="nav-accordion" data-accordion="associazione"><div class="nav-accordion__inner"></div></div>
+          </li>
+          <li>
+            <button type="button" class="nav-item" data-flyout="corsi" aria-expanded="false" aria-haspopup="true">
+              Corsi
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <div class="nav-accordion" data-accordion="corsi"><div class="nav-accordion__inner"></div></div>
+          </li>
+          <li>
+            <button type="button" class="nav-item" data-flyout="partecipa" aria-expanded="false" aria-haspopup="true">
+              Partecipa
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <div class="nav-accordion" data-accordion="partecipa"><div class="nav-accordion__inner"></div></div>
+          </li>
+          <li>
+            <button type="button" class="nav-item" data-flyout="scopri" aria-expanded="false" aria-haspopup="true">
+              Scopri
+              <svg class="nav-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <div class="nav-accordion" data-accordion="scopri"><div class="nav-accordion__inner"></div></div>
+          </li>
+          <li><a class="nav-item" href="#/contatti">Contatti</a></li>
+        </ul>
+
+        <span class="nav-hover-bg" aria-hidden="true"></span>
+
+        <div class="nav-flyout" hidden>
+          <div class="nav-flyout__bg" aria-hidden="true"></div>
+          <div class="nav-flyout__viewport">
+
+            <!-- 1) ASSOCIAZIONE – mega panel con anteprima immagini -->
+            <div class="nav-flyout__panel nav-flyout__panel--mega" data-panel="associazione">
+              <div class="nav-dropdown__inner">
+                <div class="nav-dropdown__sidebar">
+                  <span class="nav-dropdown__pill" aria-hidden="true"></span>
+                  <ul class="nav-dropdown__list">
+                    <li><a class="nav-dropdown__item" href="#/chi-siamo" data-preview-index="0">
+                      <span class="nav-dropdown__title">Chi siamo</span>
+                      <span class="nav-dropdown__description">La nostra storia, le finalità e l'organizzazione attuale.</span></a></li>
+                    <li><a class="nav-dropdown__item" href="#/statuto" data-preview-index="1">
+                      <span class="nav-dropdown__title">Statuto e valori</span>
+                      <span class="nav-dropdown__description">Statuto, regolamento e carta dei valori in PDF.</span></a></li>
+                    <li><a class="nav-dropdown__item" href="#/docenti" data-preview-index="2">
+                      <span class="nav-dropdown__title">Docenti</span>
+                      <span class="nav-dropdown__description">Le persone che portano i corsi in aula.</span></a></li>
+                    <li><a class="nav-dropdown__item" href="#/insegna" data-preview-index="3">
+                      <span class="nav-dropdown__title">Insegna con noi</span>
+                      <span class="nav-dropdown__description">Proponi un corso e condividi quello che sai.</span></a></li>
+                  </ul>
+                </div>
+                <div class="nav-dropdown__preview">
+                  <div class="nav-dropdown__preview-panel is-active" data-preview-index="0"><div class="nav-dropdown__placeholder"><img src="img/chi-siamo.jpg" alt="Incontro tra soci di età diverse" /></div></div>
+                  <div class="nav-dropdown__preview-panel" data-preview-index="1"><div class="nav-dropdown__placeholder"><img src="img/statuto-valori.jpg" alt="Documenti dello statuto su una scrivania" /></div></div>
+                  <div class="nav-dropdown__preview-panel" data-preview-index="2"><div class="nav-dropdown__placeholder"><img src="img/docenti.jpg" alt="Una docente spiega alla lavagna a una classe di adulti" /></div></div>
+                  <div class="nav-dropdown__preview-panel" data-preview-index="3"><div class="nav-dropdown__placeholder"><img src="img/insegna-con-noi.jpg" alt="Laboratorio di tessitura tra generazioni" /></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2) CORSI – simple -->
+            <div class="nav-flyout__panel nav-flyout__panel--simple" data-panel="corsi">
+              <div class="nav-dropdown__inner">
+                <span class="nav-dropdown__pill" aria-hidden="true"></span>
+                <ul class="nav-dropdown__list">
+                  <li><a class="nav-dropdown__item" href="#/corsi"><span class="nav-dropdown__title">Tutti i corsi</span></a></li>
+                  <li><a class="nav-dropdown__item" href="#/calendario"><span class="nav-dropdown__title">Calendario</span></a></li>
+                  <li><a class="nav-dropdown__item" href="#/regolamento-corsi"><span class="nav-dropdown__title">Regolamento corsi</span></a></li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- 3) PARTECIPA – featured cards -->
+            <div class="nav-flyout__panel nav-flyout__panel--featured" data-panel="partecipa">
+              <div class="nav-dropdown__inner">
+                <a class="nav-featured__card" href="#/diventa-socio">
+                  <img class="nav-featured__image" src="img/diventa-socio.jpg" alt="Corso di informatica per senior" />
+                  <span class="nav-featured__content">
+                    <span class="nav-dropdown__title">Diventa socio</span>
+                    <span class="nav-dropdown__description">Adesione online e quota annuale, poi ti iscrivi ai corsi.</span>
+                  </span>
+                </a>
+                <a class="nav-featured__card" href="#/sostienici">
+                  <img class="nav-featured__image" src="img/sostienici.jpg" alt="Serata culturale nella piazza del paese" />
+                  <span class="nav-featured__content">
+                    <span class="nav-dropdown__title">Sostienici</span>
+                    <span class="nav-dropdown__description">Una donazione o il tuo 5×1000 a UNIdea.</span>
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            <!-- 4) SCOPRI – simple -->
+            <div class="nav-flyout__panel nav-flyout__panel--simple" data-panel="scopri">
+              <div class="nav-dropdown__inner">
+                <span class="nav-dropdown__pill" aria-hidden="true"></span>
+                <ul class="nav-dropdown__list">
+                  <li><a class="nav-dropdown__item" href="#/news"><span class="nav-dropdown__title">News</span></a></li>
+                  <li><a class="nav-dropdown__item" href="#/archivio"><span class="nav-dropdown__title">Archivio foto e video</span></a></li>
+                  <li><a class="nav-dropdown__item" href="#/faq"><span class="nav-dropdown__title">FAQ</span></a></li>
+                  <li><a class="nav-dropdown__item" href="#/trasparenza"><span class="nav-dropdown__title">Trasparenza</span></a></li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </nav>
+
+      <div class="header-actions">
+        <div class="lang-switch" aria-label="Lingua">
+          <a href="#" data-act="lang-it" aria-current="true" lang="it">IT</a><span class="sep" aria-hidden="true">/</span><a href="#" data-act="lang-en" lang="en">EN</a>
+        </div>
+        <a class="cta" href="#/area"><span id="cta-label">Area soci</span></a>
+      </div>
+
+      <button type="button" class="nav-menu-toggle" aria-expanded="false" aria-label="Apri menu">
+        <span class="nav-menu-toggle__icon" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="urgent-slot"></div>
+<main id="app" tabindex="-1"></main>
+
+<footer class="site-footer" id="site-footer">
+  <div class="wrap">
+    <div class="f-top">
+      <div class="f-col f-id">
+        <p class="f-h">Dati identificativi</p>
+        <p><strong>UNIdea Tonara APS</strong>Università Intergenerazionale<br>Via Vittorio Emanuele 2<br>08039 Tonara (NU)<br>C.F. 93070870915<br>RUNTS n. 182212 sez. APS<br>PEC <a href="mailto:unideatonara@pec.it">unideatonara@pec.it</a></p>
+      </div>
+      <div class="f-col">
+        <p class="f-h">Contatti</p>
+        <ul>
+          <li><a href="#/contatti">Email</a></li>
+          <li><a href="#/contatti">Telefono</a></li>
+          <li><a href="#/contatti">WhatsApp</a></li>
+          <li><a href="#" data-act="ext">Facebook</a></li>
+          <li><a href="#" data-act="ext">Instagram</a></li>
+          <li><a href="#/contatti">Dove siamo e orari</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <p class="f-h">Link utili</p>
+        <ul>
+          <li><a href="#/trasparenza">Trasparenza</a></li>
+          <li><a href="#/statuto">Statuto</a></li>
+          <li><a href="#/sostienici">5×1000</a></li>
+          <li><a href="#/mappa-sito">Mappa del sito</a></li>
+          <li><a href="#/faq">FAQ</a></li>
+          <li><a href="#/contatti">Contatti</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <p class="f-h">Legale</p>
+        <ul>
+          <li><a href="#/privacy">Privacy policy</a></li>
+          <li><a href="#/cookie">Cookie policy</a></li>
+          <li><a href="#" data-act="cookie-prefs">Preferenze cookie</a></li>
+          <li><a href="#/termini">Termini e condizioni</a></li>
+          <li><a href="#/accessibilita">Dichiarazione di accessibilità</a></li>
+        </ul>
+      </div>
+      <div class="f-col f-news">
+        <p class="f-h">Newsletter</p>
+        <p>Nuovi corsi ed eventi, una volta al mese.</p>
+        <form data-form="newsletter">
+          <input type="email" name="email" required placeholder="La tua email" aria-label="La tua email">
+          <button type="submit">Iscriviti</button>
+        </form>
+        <label class="consent"><input type="checkbox" name="ok" required> Ho letto l'informativa privacy e acconsento a ricevere la newsletter.</label>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© 2026 UNIdea Tonara APS · Sito realizzato da CONLER STUDIO</span>
+      <div class="f-lang" aria-label="Lingua"><a href="#" data-act="lang-it" aria-current="true">IT</a><span>/</span><a href="#" data-act="lang-en">EN</a></div>
+    </div>
+  </div>
+</footer>
+
+<div class="demo-bar" id="demo-bar" role="region" aria-label="Barra demo">
+  <div class="demo-bar__in">
+    <span class="demo-tag">Demo – dati di prova</span>
+    <span class="demo-who" id="demo-who"></span>
+    <div class="demo-roles" role="group" aria-label="Cambia ruolo">
+      <button type="button" data-role-btn="visitatore">Visitatore</button>
+      <button type="button" data-role-btn="socio">Socio</button>
+      <button type="button" data-role-btn="docente">Docente</button>
+      <button type="button" data-role-btn="moderatore">Moderatore</button>
+      <button type="button" data-role-btn="admin">Admin</button>
+    </div>
+    <button type="button" class="demo-reset" data-act="reset-demo">Reset demo</button>
+  </div>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+
+<script src="qrcode.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="nav.js"></script>
+</body>
+</html>

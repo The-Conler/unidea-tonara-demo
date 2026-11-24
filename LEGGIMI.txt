@@ -1,0 +1,18 @@
+DEMO cliccabile – sito UNIdea Tonara APS (CONLER STUDIO)
+
+COME SI APRE
+Doppio click su index.html (funziona senza internet e senza server, con Chrome, Safari, Firefox o Edge).
+
+COME SI USA
+- In basso c'è la barra DEMO: Visitatore, Socio, Docente, Moderatore, Admin. Cambi ruolo al volo.
+- Anche "Area soci" ha i pulsanti "Entra come…".
+- Tutto quello che fai (news, corsi, iscrizioni, foto, ruoli…) resta salvato in questo browser e si vede subito sul sito pubblico.
+- "Reset demo" riporta tutto ai dati di prova iniziali.
+
+PERSONE DI PROVA
+Socio: Maria Pirisi · Docente: Giovanni Loi · Moderatore: Anna Sedda · Admin: Lucia Demuro
+Nomi, email, codici fiscali e numeri sono inventati. Le foto sono generate (nessuna persona reale).
+
+COSA È SIMULATO
+Pagamenti Stripe, email (Resend), link di accesso via email, video YouTube e mappe: nessun servizio esterno viene chiamato.
+I file caricati (PDF) salvano solo il nome; le foto caricate vengono ridotte e salvate nel browser.
